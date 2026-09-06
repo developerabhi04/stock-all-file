@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "20215947391",
+    "project_id": "tradedemo-a4840",
+    "storage_bucket": "tradedemo-a4840.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20215947391:android:f3f77918f6bde95e43df4a",
+        "android_client_info": {
+          "package_name": "com.clientapk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqTdNrMvjPTdJIrbfjy7k217BARZXJ2rs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
