@@ -1,388 +1,206 @@
 import {
-  Wallet,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Target,
-  Activity,
+  ArrowDownCircle,
+  ArrowUpCircle,
   BadgeIndianRupee,
-  Layers3,
-  PiggyBank,
-  Scale,
-  CreditCard,
   CheckCircle2,
-} from 'lucide-react';
+  CreditCard,
+  DollarSign,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 
 const formatCurrency = (value) =>
-  `₹${Number(value || 0).toLocaleString('en-IN', {
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
 
-const OverviewCard = ({ title, value, note, icon: Icon, tone = 'blue' }) => {
-  const toneMap = {
-    blue: 'border-blue-100 bg-blue-50 text-blue-700',
-    emerald: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    violet: 'border-violet-100 bg-violet-50 text-violet-700',
-    orange: 'border-orange-100 bg-orange-50 text-orange-700',
-    slate: 'border-slate-200 bg-slate-50 text-slate-700',
-    red: 'border-red-100 bg-red-50 text-red-700',
-  };
-
-  return (
-    <div
-      className={`rounded-2xl border p-5 shadow-sm ${
-        toneMap[tone] || toneMap.blue
-      }`}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="rounded-xl bg-white/80 p-3 shadow-sm">
-          <Icon size={20} />
-        </div>
-      </div>
-
-      <p className="text-sm font-medium opacity-80">{title}</p>
-
-      <p className="mt-2 text-2xl font-bold">{value}</p>
-
-      <p className="mt-2 text-xs opacity-80">{note}</p>
-    </div>
-  );
-};
-
-const DetailCard = ({
+const StatCard = ({
   title,
   value,
   note,
   icon: Icon,
-  iconWrap,
-  noteClass,
+  iconClassName,
+  valueClassName,
   trendIcon: TrendIcon,
-  trendClass,
+  trendClassName,
 }) => {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="mb-4 flex items-start justify-between">
-        <div className={`rounded-2xl p-3 ${iconWrap}`}>
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconClassName}`}
+        >
           <Icon size={22} />
         </div>
 
-        {TrendIcon && <TrendIcon className={trendClass} size={18} />}
+        {TrendIcon ? (
+          <TrendIcon className={trendClassName || "text-slate-400"} size={18} />
+        ) : null}
       </div>
 
-      <p className="text-sm text-slate-500">{title}</p>
+      <p className="text-sm font-medium text-slate-500">{title}</p>
 
-      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+      <p className={`mt-2 text-2xl font-bold ${valueClassName}`}>{value}</p>
 
-      <p className={`mt-2 text-xs font-medium ${noteClass}`}>{note}</p>
+      <p className="mt-2 text-xs font-medium text-slate-500">{note}</p>
     </div>
   );
 };
 
 const UserBalanceCards = ({ user = {}, portfolio = {}, stats = {} }) => {
-  const walletBalance = Number(
-    stats.walletBalance ?? user.walletBalance ?? 0
+  const walletBalance = Number(stats.walletBalance ?? user.walletBalance ?? 0);
+
+  // Comes from buildAdminStats in UserDetails.jsx.
+  const totalAddedMoney = Number(
+    stats.totalAddedMoney ?? stats.totalDeposits ?? 0,
   );
 
-  const totalInvested = Number(
-    portfolio.totalInvested ??
-      portfolio.totalPrincipalInvested ??
-      0
-  );
+  const addedMoneyCount = Number(stats.addedMoneyCount ?? 0);
 
-  const currentValue = Number(
-    portfolio.currentValue ??
-      portfolio.totalCurrentValue ??
-      0
-  );
-
-  const totalPnL = Number(
-    portfolio.totalPnL ??
-      portfolio.totalInterestEarned ??
-      currentValue - totalInvested
-  );
-
-  const totalPnLPercent = Number(
-    portfolio.totalPnLPercent ??
-      (totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0)
-  );
-
-  const todayPnL = Number(
-    portfolio.todayPnL ??
-      portfolio.totalDailyEarning ??
-      0
-  );
-
-  const statusBuckets = portfolio.statusBuckets || {};
-  const moneyByStatus = portfolio.moneyByStatus || {};
-
-  /*
-    Supports both formats:
-
-    Old UserDetails format:
-    portfolio.activeInvested
-    portfolio.activeInvestmentsCount
-    portfolio.completedInvested
-    portfolio.completedInvestmentsCount
-
-    New UserInvestmentsPage format:
-    portfolio.moneyByStatus.active
-    portfolio.moneyByStatus.completed
-    portfolio.statusBuckets.active
-    portfolio.statusBuckets.completed
-  */
-  const activeInvestmentMoney = Number(
-    portfolio.activeInvested ??
-      moneyByStatus.active ??
-      0
-  );
-
-  const completedInvestmentMoney = Number(
-    portfolio.completedInvested ??
-      moneyByStatus.completed ??
-      0
-  );
-
-  const activeInvestmentCount = Number(
-    portfolio.activeInvestmentsCount ??
-      statusBuckets.active ??
-      0
-  );
-
-  const completedInvestmentCount = Number(
-    portfolio.completedInvestmentsCount ??
-      statusBuckets.completed ??
-      0
-  );
-
-  const unlockedInvestmentMoney = Number(
-    moneyByStatus.unlocked ?? 0
-  );
-
-  const unlockedInvestmentCount = Number(
-    statusBuckets.unlocked ?? 0
-  );
-
-  const totalDeposits = Number(stats.totalDeposits ?? 0);
   const totalWithdrawals = Number(stats.totalWithdrawals ?? 0);
 
-  const principalInSystem = Number(
-    stats.principalInSystem ??
-      walletBalance + totalInvested
-  );
+  const withdrawalCount = Number(stats.withdrawalCount ?? 0);
 
   const totalTransactions = Number(stats.totalTransactions ?? 0);
-  const totalCredits = Number(stats.totalCredits ?? 0);
-  const totalDebits = Number(stats.totalDebits ?? 0);
 
-  const isProfit = totalPnL >= 0;
-  const isTodayProfit = todayPnL >= 0;
+  // Comes from buildPortfolioSummary in UserDetails.jsx.
+  const activeInvestmentMoney = Number(portfolio.activeInvested ?? 0);
 
-  const detailCards = [
-    {
-      title: 'Portfolio Value',
-      value: formatCurrency(currentValue),
-      note: `${activeInvestmentCount} active investments · ${formatCurrency(
-        activeInvestmentMoney
-      )}`,
-      icon: Activity,
-      iconWrap: 'bg-violet-50 text-violet-600',
-      noteClass: 'text-violet-600',
-      trendIcon: TrendingUp,
-      trendClass: 'text-violet-500',
-    },
+  const activeInvestmentCount = Number(portfolio.activeInvestmentsCount ?? 0);
 
-    {
-      title: 'Active Investment Money',
-      value: formatCurrency(activeInvestmentMoney),
-      note: `${activeInvestmentCount} currently active investments`,
-      icon: TrendingUp,
-      iconWrap: 'bg-emerald-50 text-emerald-600',
-      noteClass: 'text-emerald-600',
-      trendIcon: TrendingUp,
-      trendClass: 'text-emerald-500',
-    },
+  const completedInvestmentMoney = Number(portfolio.completedInvested ?? 0);
 
-    {
-      title: 'Completed Investment Money',
-      value: formatCurrency(completedInvestmentMoney),
-      note: `${completedInvestmentCount} completed investments`,
-      icon: CheckCircle2,
-      iconWrap: 'bg-violet-50 text-violet-600',
-      noteClass: 'text-violet-600',
-      trendIcon: CheckCircle2,
-      trendClass: 'text-violet-500',
-    },
+  const completedInvestmentCount = Number(
+    portfolio.completedInvestmentsCount ?? 0,
+  );
 
-    {
-      title: 'Unlocked Investment Money',
-      value: formatCurrency(unlockedInvestmentMoney),
-      note: `${unlockedInvestmentCount} unlocked investments`,
-      icon: Layers3,
-      iconWrap: 'bg-blue-50 text-blue-600',
-      noteClass: 'text-blue-600',
-      trendIcon: Layers3,
-      trendClass: 'text-blue-500',
-    },
+  // Must be calculated from active investments only in UserDetails.jsx.
+  const todayEarnings = Number(portfolio.todayPnL ?? 0);
 
-    {
-      title: 'Today Earnings',
-      value: formatCurrency(todayPnL),
-      note: isTodayProfit ? 'Today positive' : 'Today negative',
-      icon: BadgeIndianRupee,
-      iconWrap: isTodayProfit
-        ? 'bg-emerald-50 text-emerald-600'
-        : 'bg-red-50 text-red-600',
-      noteClass: isTodayProfit
-        ? 'text-emerald-600'
-        : 'text-red-600',
-      trendIcon: isTodayProfit ? TrendingUp : TrendingDown,
-      trendClass: isTodayProfit
-        ? 'text-emerald-500'
-        : 'text-red-500',
-    },
+  // Active + completed investment return, based on your chosen logic.
+  const totalReturns = Number(portfolio.totalPnL ?? 0);
 
-    {
-      title: 'Total Withdrawals',
-      value: formatCurrency(totalWithdrawals),
-      note: 'Withdrawal debits from user wallet',
-      icon: TrendingDown,
-      iconWrap: 'bg-rose-50 text-rose-600',
-      noteClass: 'text-rose-600',
-      trendIcon: TrendingDown,
-      trendClass: 'text-rose-500',
-    },
-
-    {
-      title: 'Total Investments',
-      value: String(statusBuckets.all || 0),
-      note: `${activeInvestmentCount} active · ${formatCurrency(
-        activeInvestmentMoney
-      )}`,
-      icon: Target,
-      iconWrap: 'bg-blue-50 text-blue-600',
-      noteClass: 'text-blue-600',
-      trendIcon: Layers3,
-      trendClass: 'text-blue-500',
-    },
-
-    {
-      title: 'Completed Investments',
-      value: String(completedInvestmentCount),
-      note: `${formatCurrency(
-        completedInvestmentMoney
-      )} completed investment amount`,
-      icon: CheckCircle2,
-      iconWrap: 'bg-violet-50 text-violet-600',
-      noteClass: 'text-violet-600',
-      trendIcon: CheckCircle2,
-      trendClass: 'text-violet-500',
-    },
-
-    {
-      title: 'Total Transactions',
-      value: String(totalTransactions),
-      note: `${formatCurrency(totalCredits)} credits · ${formatCurrency(
-        totalDebits
-      )} debits`,
-      icon: CreditCard,
-      iconWrap: 'bg-red-50 text-red-600',
-      noteClass: 'text-red-600',
-      trendIcon: TrendingUp,
-      trendClass: 'text-red-500',
-    },
-  ];
+  const isTodayPositive = todayEarnings >= 0;
+  const isReturnPositive = totalReturns >= 0;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <OverviewCard
-          title="Total Deposited Balance"
-          value={formatCurrency(totalDeposits)}
-          note="Total deposits only, no interest included"
-          icon={PiggyBank}
-          tone="emerald"
-        />
-
-        <OverviewCard
+    <div className="space-y-5">
+      {/* Wallet and transaction information */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
           title="Current Wallet Balance"
           value={formatCurrency(walletBalance)}
           note="Current available balance"
-          icon={walletBalance >= 0 ? Wallet : TrendingDown}
-          tone="blue"
+          icon={Wallet}
+          iconClassName="bg-blue-50 text-blue-600"
+          valueClassName="text-blue-700"
+          trendIcon={walletBalance >= 0 ? TrendingUp : TrendingDown}
+          trendClassName={walletBalance >= 0 ? "text-blue-500" : "text-red-500"}
         />
 
-        <OverviewCard
-          title="Total Principal in System"
-          value={formatCurrency(principalInSystem)}
-          note="Wallet balance + total invested amount"
-          icon={Scale}
-          tone="blue"
+        <StatCard
+          title="Total Added Money"
+          value={formatCurrency(totalAddedMoney)}
+          note={`${addedMoneyCount.toLocaleString(
+            "en-IN",
+          )} completed add-money transactions`}
+          icon={ArrowUpCircle}
+          iconClassName="bg-emerald-50 text-emerald-600"
+          valueClassName="text-emerald-700"
+          trendIcon={TrendingUp}
+          trendClassName="text-emerald-500"
         />
 
-        <OverviewCard
-          title="Total Invested"
-          value={formatCurrency(totalInvested)}
-          note={`${statusBuckets.all || 0} total investments`}
-          icon={Target}
-          tone="blue"
+        <StatCard
+          title="Total Withdrawals"
+          value={formatCurrency(totalWithdrawals)}
+          note={`${withdrawalCount.toLocaleString(
+            "en-IN",
+          )} completed withdrawal transactions`}
+          icon={ArrowDownCircle}
+          iconClassName="bg-rose-50 text-rose-600"
+          valueClassName="text-rose-700"
+          trendIcon={TrendingDown}
+          trendClassName="text-rose-500"
+        />
+
+        <StatCard
+          title="Total Transactions"
+          value={totalTransactions.toLocaleString("en-IN")}
+          note="All wallet and investment transaction records"
+          icon={CreditCard}
+          iconClassName="bg-slate-100 text-slate-600"
+          valueClassName="text-slate-800"
+          trendIcon={TrendingUp}
+          trendClassName="text-slate-500"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-        {detailCards.map((card) => (
-          <DetailCard key={card.title} {...card} />
-        ))}
+      {/* Investment information */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Active Investment"
+          value={formatCurrency(activeInvestmentMoney)}
+          note={`${activeInvestmentCount.toLocaleString(
+            "en-IN",
+          )} active investments`}
+          icon={TrendingUp}
+          iconClassName="bg-violet-50 text-violet-600"
+          valueClassName="text-violet-700"
+          trendIcon={TrendingUp}
+          trendClassName="text-violet-500"
+        />
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-          <div className="mb-4 flex items-start justify-between">
-            <div
-              className={`rounded-2xl p-3 ${
-                isProfit
-                  ? 'bg-emerald-50 text-emerald-600'
-                  : 'bg-red-50 text-red-600'
-              }`}
-            >
-              <DollarSign size={22} />
-            </div>
+        <StatCard
+          title="Completed Investment Money"
+          value={formatCurrency(completedInvestmentMoney)}
+          note={`${completedInvestmentCount.toLocaleString(
+            "en-IN",
+          )} completed investments`}
+          icon={CheckCircle2}
+          iconClassName="bg-indigo-50 text-indigo-600"
+          valueClassName="text-indigo-700"
+          trendIcon={CheckCircle2}
+          trendClassName="text-indigo-500"
+        />
 
-            {isProfit ? (
-              <TrendingUp className="text-emerald-500" size={18} />
-            ) : (
-              <TrendingDown className="text-red-500" size={18} />
-            )}
-          </div>
+        <StatCard
+          title="Today's Earnings"
+          value={formatCurrency(todayEarnings)}
+          note="Active investments only"
+          icon={BadgeIndianRupee}
+          iconClassName={
+            isTodayPositive
+              ? "bg-amber-50 text-amber-600"
+              : "bg-red-50 text-red-600"
+          }
+          valueClassName={isTodayPositive ? "text-amber-700" : "text-red-700"}
+          trendIcon={isTodayPositive ? TrendingUp : TrendingDown}
+          trendClassName={isTodayPositive ? "text-amber-500" : "text-red-500"}
+        />
 
-          <p className="text-sm text-slate-500">Total Returns</p>
-
-          <p
-            className={`mt-2 text-2xl font-bold ${
-              isProfit ? 'text-emerald-600' : 'text-red-600'
-            }`}
-          >
-            {isProfit ? '+' : ''}
-            {formatCurrency(totalPnL)}
-          </p>
-
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <p
-              className={`text-xs font-medium ${
-                isProfit ? 'text-emerald-600' : 'text-red-600'
-              }`}
-            >
-              {isProfit ? '+' : ''}
-              {totalPnLPercent.toFixed(2)}%
-            </p>
-
-            <p
-              className={`text-xs font-medium ${
-                isTodayProfit ? 'text-blue-600' : 'text-red-600'
-              }`}
-            >
-              Today {isTodayProfit ? '+' : ''}
-              {formatCurrency(todayPnL)}
-            </p>
-          </div>
-        </div>
+        <StatCard
+          title="Total Returns"
+          value={`${isReturnPositive ? "+" : ""}${formatCurrency(
+            totalReturns,
+          )}`}
+          note="Returns from active and completed investments"
+          icon={DollarSign}
+          iconClassName={
+            isReturnPositive
+              ? "bg-emerald-50 text-emerald-600"
+              : "bg-red-50 text-red-600"
+          }
+          valueClassName={
+            isReturnPositive ? "text-emerald-700" : "text-red-700"
+          }
+          trendIcon={isReturnPositive ? TrendingUp : TrendingDown}
+          trendClassName={
+            isReturnPositive ? "text-emerald-500" : "text-red-500"
+          }
+        />
       </div>
     </div>
   );

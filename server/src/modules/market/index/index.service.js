@@ -1,17 +1,19 @@
-import mongoose from 'mongoose';
-import Index from './index.model.js';
-import Category from '../category/category.model.js';
-import { ApiError } from '../../../shared/utils/apiError.js';
+import mongoose from "mongoose";
+import { ApiError } from "../../../shared/utils/apiError.js";
+import Category from "../category/category.model.js";
+import Index from "./index.model.js";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
-const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (value = "") =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const normalizeCategoryInput = (value = '') => String(value).trim().toLowerCase();
+const normalizeCategoryInput = (value = "") =>
+  String(value).trim().toLowerCase();
 
 const normalizeString = (value, fieldName) => {
-  if (value === null || typeof value === 'undefined') {
-    return '';
+  if (value === null || typeof value === "undefined") {
+    return "";
   }
 
   const normalized = String(value).trim();
@@ -24,15 +26,19 @@ const normalizeString = (value, fieldName) => {
 };
 
 const normalizeOptionalString = (value) => {
-  if (value === null || typeof value === 'undefined') {
-    return '';
+  if (value === null || typeof value === "undefined") {
+    return "";
   }
 
   return String(value).trim();
 };
 
-const normalizeRequiredNumber = (value, fieldName, { min = 0, integer = false } = {}) => {
-  if (value === '' || value === null || typeof value === 'undefined') {
+const normalizeRequiredNumber = (
+  value,
+  fieldName,
+  { min = 0, integer = false } = {},
+) => {
+  if (value === "" || value === null || typeof value === "undefined") {
     throw new ApiError(400, `${fieldName} is required`);
   }
 
@@ -54,7 +60,7 @@ const normalizeRequiredNumber = (value, fieldName, { min = 0, integer = false } 
 };
 
 const normalizeOptionalNumber = (value, fieldName, { min = 0 } = {}) => {
-  if (value === '' || value === null || typeof value === 'undefined') {
+  if (value === "" || value === null || typeof value === "undefined") {
     return null;
   }
 
@@ -72,19 +78,22 @@ const normalizeOptionalNumber = (value, fieldName, { min = 0 } = {}) => {
 };
 
 const normalizeDefaultDailyRate = (value) => {
-  return normalizeOptionalNumber(value, 'Default daily rate', { min: 0 });
+  return normalizeOptionalNumber(value, "Default daily rate", { min: 0 });
 };
 
 const normalizeMinimumInvestment = (value) => {
-  return normalizeRequiredNumber(value, 'Minimum investment', { min: 0.01 });
+  return normalizeRequiredNumber(value, "Minimum investment", { min: 0.01 });
 };
 
 const normalizeLockPeriodDays = (value) => {
-  return normalizeRequiredNumber(value, 'Lock period days', { min: 1, integer: true });
+  return normalizeRequiredNumber(value, "Lock period days", {
+    min: 1,
+    integer: true,
+  });
 };
 
 const normalizeNonNegativeNumber = (value, fieldName) => {
-  if (value === '' || value === null || typeof value === 'undefined') {
+  if (value === "" || value === null || typeof value === "undefined") {
     return 0;
   }
 
@@ -102,18 +111,22 @@ const normalizeNonNegativeNumber = (value, fieldName) => {
 };
 
 const findCategoryFromInput = async (categoryValue) => {
-  if (!categoryValue || categoryValue === 'All' || categoryValue === 'All Indices') {
+  if (
+    !categoryValue ||
+    categoryValue === "All" ||
+    categoryValue === "All Indices"
+  ) {
     return null;
   }
 
   const normalized = normalizeCategoryInput(categoryValue);
-  const safeRegex = new RegExp(`^${escapeRegex(String(categoryValue).trim())}$`, 'i');
+  const safeRegex = new RegExp(
+    `^${escapeRegex(String(categoryValue).trim())}$`,
+    "i",
+  );
 
   const category = await Category.findOne({
-    $or: [
-      { slug: normalized },
-      { name: safeRegex },
-    ],
+    $or: [{ slug: normalized }, { name: safeRegex }],
   });
 
   return category;
@@ -122,7 +135,7 @@ const findCategoryFromInput = async (categoryValue) => {
 const resolveCategoryId = async (categoryValue, required = true) => {
   if (!categoryValue) {
     if (required) {
-      throw new ApiError(400, 'Category is required');
+      throw new ApiError(400, "Category is required");
     }
     return undefined;
   }
@@ -130,7 +143,7 @@ const resolveCategoryId = async (categoryValue, required = true) => {
   if (objectIdRegex.test(String(categoryValue))) {
     const exists = await Category.findById(categoryValue).lean();
     if (!exists) {
-      throw new ApiError(404, 'Selected category not found');
+      throw new ApiError(404, "Selected category not found");
     }
     return categoryValue;
   }
@@ -138,7 +151,7 @@ const resolveCategoryId = async (categoryValue, required = true) => {
   const categoryDoc = await findCategoryFromInput(String(categoryValue));
 
   if (!categoryDoc) {
-    throw new ApiError(404, 'Selected category not found');
+    throw new ApiError(404, "Selected category not found");
   }
 
   return categoryDoc._id;
@@ -150,25 +163,25 @@ const buildFilters = async (query = {}, publicOnly = false) => {
 
   if (publicOnly) {
     filters.isActive = true;
-  } else if (typeof isActive !== 'undefined' && isActive !== '') {
-    filters.isActive = isActive === 'true' || isActive === true;
+  } else if (typeof isActive !== "undefined" && isActive !== "") {
+    filters.isActive = isActive === "true" || isActive === true;
   }
 
-  const featuredValue = typeof featured !== 'undefined' ? featured : isFeatured;
+  const featuredValue = typeof featured !== "undefined" ? featured : isFeatured;
 
-  if (typeof featuredValue !== 'undefined' && featuredValue !== '') {
-    filters.isFeatured = featuredValue === 'true' || featuredValue === true;
+  if (typeof featuredValue !== "undefined" && featuredValue !== "") {
+    filters.isFeatured = featuredValue === "true" || featuredValue === true;
   }
 
   if (search?.trim()) {
     const safeSearch = escapeRegex(search.trim());
     filters.$or = [
-      { name: { $regex: safeSearch, $options: 'i' } },
-      { symbol: { $regex: safeSearch, $options: 'i' } },
+      { name: { $regex: safeSearch, $options: "i" } },
+      { symbol: { $regex: safeSearch, $options: "i" } },
     ];
   }
 
-  if (category && category !== 'All' && category !== 'All Indices') {
+  if (category && category !== "All" && category !== "All Indices") {
     if (objectIdRegex.test(String(category))) {
       filters.category = category;
     } else {
@@ -185,8 +198,12 @@ const buildFilters = async (query = {}, publicOnly = false) => {
   return filters;
 };
 
-const calculatePagination = (page = 1, limit = 20) => {
+const calculatePagination = (page = 1, limit) => {
   const pageNumber = Math.max(Number(page) || 1, 1);
+  if (limit === undefined || limit === null || limit === "") {
+    return { pageNumber: 1, limitNumber: 0, skip: 0 };
+  }
+
   const limitNumber = Math.max(Number(limit) || 20, 1);
   const skip = (pageNumber - 1) * limitNumber;
   return { pageNumber, limitNumber, skip };
@@ -194,40 +211,48 @@ const calculatePagination = (page = 1, limit = 20) => {
 
 const mapIndexResponse = (item) => ({
   ...item,
+  apiSymbol: item.apiSymbol || "",
+
   defaultDailyRate:
-    item.defaultDailyRate === null || typeof item.defaultDailyRate === 'undefined'
+    item.defaultDailyRate === null ||
+    typeof item.defaultDailyRate === "undefined"
       ? null
       : Number(item.defaultDailyRate),
   minimumInvestment:
-    item.minimumInvestment === null || typeof item.minimumInvestment === 'undefined'
+    item.minimumInvestment === null ||
+    typeof item.minimumInvestment === "undefined"
       ? null
       : Number(item.minimumInvestment),
   lockPeriodDays:
-    item.lockPeriodDays === null || typeof item.lockPeriodDays === 'undefined'
+    item.lockPeriodDays === null || typeof item.lockPeriodDays === "undefined"
       ? null
       : Number(item.lockPeriodDays),
   currentValue: Number(item.currentValue || 0),
   highValue: Number(item.highValue || 0),
   lowValue: Number(item.lowValue || 0),
   previousClose: Number(item.previousClose || 0),
+
   change: Number(item.change || 0),
   changePercent: Number(item.changePercent || 0),
   marketCap: Number(item.marketCap || 0),
   volume: Number(item.volume || 0),
   categoryId: item.category?._id || item.category || null,
-  categoryName: item.category?.name || '',
-  categorySlug: item.category?.slug || '',
-  categoryColor: item.category?.color || '',
-  categoryIcon: item.category?.icon || '',
+  categoryName: item.category?.name || "",
+  categorySlug: item.category?.slug || "",
+  categoryColor: item.category?.color || "",
+  categoryIcon: item.category?.icon || "",
 });
 
 export const getAllIndicesService = async (query) => {
   const filters = await buildFilters(query, false);
-  const { pageNumber, limitNumber, skip } = calculatePagination(query.page, query.limit);
+  const { pageNumber, limitNumber, skip } = calculatePagination(
+    query.page,
+    query.limit,
+  );
 
   const [indices, total] = await Promise.all([
     Index.find(filters)
-      .populate('category', 'name slug color icon displayOrder isActive')
+      .populate("category", "name slug color icon displayOrder isActive")
       .sort({ isFeatured: -1, createdAt: -1, name: 1 })
       .skip(skip)
       .limit(limitNumber)
@@ -245,29 +270,35 @@ export const getAllIndicesService = async (query) => {
 
 export const getPublicIndicesService = async (query) => {
   const filters = await buildFilters(query, true);
-  const { pageNumber, limitNumber, skip } = calculatePagination(query.page, query.limit);
+  const { pageNumber, limitNumber, skip } = calculatePagination(
+    query.page,
+    query.limit,
+  );
+
+  let indexQuery = Index.find(filters)
+    .populate("category", "name slug color icon displayOrder isActive")
+    .sort({ isFeatured: -1, createdAt: -1, name: 1 });
+
+  if (limitNumber > 0) {
+    indexQuery = indexQuery.skip(skip).limit(limitNumber);
+  }
 
   const [indices, total] = await Promise.all([
-    Index.find(filters)
-      .populate('category', 'name slug color icon displayOrder isActive')
-      .sort({ isFeatured: -1, createdAt: -1, name: 1 })
-      .skip(skip)
-      .limit(limitNumber)
-      .lean({ virtuals: true }),
+    indexQuery.lean({ virtuals: true }),
     Index.countDocuments(filters),
   ]);
 
   return {
     indices: indices.map(mapIndexResponse),
     total,
-    totalPages: Math.ceil(total / limitNumber),
+    totalPages: limitNumber > 0 ? Math.ceil(total / limitNumber) : 1,
     currentPage: pageNumber,
   };
 };
 
 export const getFeaturedIndicesService = async () => {
   const indices = await Index.find({ isFeatured: true, isActive: true })
-    .populate('category', 'name slug color icon displayOrder isActive')
+    .populate("category", "name slug color icon displayOrder isActive")
     .sort({ lastUpdated: -1, createdAt: -1 })
     .limit(10)
     .lean({ virtuals: true });
@@ -277,68 +308,82 @@ export const getFeaturedIndicesService = async () => {
 
 export const getIndexByIdService = async ({ id }) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ApiError(400, 'Invalid index id');
+    throw new ApiError(400, "Invalid index id");
   }
 
   const index = await Index.findOne({ _id: id, isActive: true })
-    .populate('category', 'name slug color icon displayOrder isActive')
+    .populate("category", "name slug color icon displayOrder isActive")
     .lean({ virtuals: true });
 
   if (!index) {
-    throw new ApiError(404, 'Index not found');
+    throw new ApiError(404, "Index not found");
   }
 
   return mapIndexResponse(index);
 };
 
 export const getIndexBySymbolService = async ({ symbol }) => {
-  const normalizedSymbol = normalizeString(symbol, 'Symbol');
+  const normalizedSymbol = normalizeString(symbol, "Symbol");
 
   const index = await Index.findOne({
     symbol: normalizedSymbol,
     isActive: true,
   })
-    .populate('category', 'name slug color icon displayOrder isActive')
+    .populate("category", "name slug color icon displayOrder isActive")
     .lean({ virtuals: true });
 
   if (!index) {
-    throw new ApiError(404, 'Index not found');
+    throw new ApiError(404, "Index not found");
   }
 
   return mapIndexResponse(index);
 };
 
 export const createIndexService = async (payload) => {
-  const name = normalizeString(payload.name, 'Index name');
-  const symbol = normalizeString(payload.symbol, 'Index symbol');
+  const name = normalizeString(payload.name, "Index name");
+  const symbol = normalizeString(payload.symbol, "Index symbol");
   const category = await resolveCategoryId(payload.category, true);
 
   const existingName = await Index.findOne({ name });
   if (existingName) {
-    throw new ApiError(409, 'Index with this name already exists');
+    throw new ApiError(409, "Index with this name already exists");
   }
 
   const index = await Index.create({
     name,
     symbol,
     category,
-    currentValue: normalizeRequiredNumber(payload.currentValue, 'Current value', { min: 0 }),
-    highValue: normalizeRequiredNumber(payload.highValue, 'High value', { min: 0 }),
-    lowValue: normalizeRequiredNumber(payload.lowValue, 'Low value', { min: 0 }),
-    previousClose: normalizeRequiredNumber(payload.previousClose, 'Previous close', { min: 0 }),
+    currentValue: normalizeRequiredNumber(
+      payload.currentValue,
+      "Current value",
+      { min: 0 },
+    ),
+    highValue: normalizeRequiredNumber(payload.highValue, "High value", {
+      min: 0,
+    }),
+    lowValue: normalizeRequiredNumber(payload.lowValue, "Low value", {
+      min: 0,
+    }),
+    previousClose: normalizeRequiredNumber(
+      payload.previousClose,
+      "Previous close",
+      { min: 0 },
+    ),
     logoUrl: normalizeOptionalString(payload.logoUrl),
     defaultDailyRate: normalizeDefaultDailyRate(payload.defaultDailyRate),
     minimumInvestment: normalizeMinimumInvestment(payload.minimumInvestment),
     lockPeriodDays: normalizeLockPeriodDays(payload.lockPeriodDays),
-    isFeatured: typeof payload.isFeatured === 'boolean' ? payload.isFeatured : false,
-    isActive: typeof payload.isActive === 'boolean' ? payload.isActive : true,
-    marketCap: normalizeNonNegativeNumber(payload.marketCap, 'Market cap'),
-    volume: normalizeNonNegativeNumber(payload.volume, 'Volume'),
+    isFeatured:
+      typeof payload.isFeatured === "boolean" ? payload.isFeatured : false,
+    isActive: typeof payload.isActive === "boolean" ? payload.isActive : true,
+    marketCap: normalizeNonNegativeNumber(payload.marketCap, "Market cap"),
+    volume: normalizeNonNegativeNumber(payload.volume, "Volume"),
     description: normalizeOptionalString(payload.description),
+    apiSymbol: normalizeOptionalString(payload.apiSymbol),
   });
 
   const populated = await Index.findById(index._id)
-    .populate('category', 'name slug color icon displayOrder isActive')
+    .populate("category", "name slug color icon displayOrder isActive")
     .lean({ virtuals: true });
 
   return mapIndexResponse(populated);
@@ -346,19 +391,19 @@ export const createIndexService = async (payload) => {
 
 export const updateIndexService = async ({ indexId, payload }) => {
   if (!mongoose.Types.ObjectId.isValid(indexId)) {
-    throw new ApiError(400, 'Invalid index id');
+    throw new ApiError(400, "Invalid index id");
   }
 
   const index = await Index.findById(indexId);
 
   if (!index) {
-    throw new ApiError(404, 'Index not found');
+    throw new ApiError(404, "Index not found");
   }
 
   const nextPayload = {};
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'name')) {
-    const nextName = normalizeString(payload.name, 'Index name');
+  if (Object.prototype.hasOwnProperty.call(payload, "name")) {
+    const nextName = normalizeString(payload.name, "Index name");
 
     if (nextName !== index.name) {
       const existingName = await Index.findOne({
@@ -367,71 +412,102 @@ export const updateIndexService = async ({ indexId, payload }) => {
       });
 
       if (existingName) {
-        throw new ApiError(409, 'Index with this name already exists');
+        throw new ApiError(409, "Index with this name already exists");
       }
     }
 
     nextPayload.name = nextName;
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'symbol')) {
-    const nextSymbol = normalizeString(payload.symbol, 'Index symbol');
+  if (Object.prototype.hasOwnProperty.call(payload, "symbol")) {
+    const nextSymbol = normalizeString(payload.symbol, "Index symbol");
     nextPayload.symbol = nextSymbol;
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'category')) {
+  if (Object.prototype.hasOwnProperty.call(payload, "category")) {
     nextPayload.category = await resolveCategoryId(payload.category, true);
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'currentValue')) {
-    nextPayload.currentValue = normalizeRequiredNumber(payload.currentValue, 'Current value', { min: 0 });
+  if (Object.prototype.hasOwnProperty.call(payload, "currentValue")) {
+    nextPayload.currentValue = normalizeRequiredNumber(
+      payload.currentValue,
+      "Current value",
+      { min: 0 },
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'highValue')) {
-    nextPayload.highValue = normalizeRequiredNumber(payload.highValue, 'High value', { min: 0 });
+  if (Object.prototype.hasOwnProperty.call(payload, "highValue")) {
+    nextPayload.highValue = normalizeRequiredNumber(
+      payload.highValue,
+      "High value",
+      { min: 0 },
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'lowValue')) {
-    nextPayload.lowValue = normalizeRequiredNumber(payload.lowValue, 'Low value', { min: 0 });
+  if (Object.prototype.hasOwnProperty.call(payload, "lowValue")) {
+    nextPayload.lowValue = normalizeRequiredNumber(
+      payload.lowValue,
+      "Low value",
+      { min: 0 },
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'previousClose')) {
-    nextPayload.previousClose = normalizeRequiredNumber(payload.previousClose, 'Previous close', { min: 0 });
+  if (Object.prototype.hasOwnProperty.call(payload, "previousClose")) {
+    nextPayload.previousClose = normalizeRequiredNumber(
+      payload.previousClose,
+      "Previous close",
+      { min: 0 },
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'logoUrl')) {
+  if (Object.prototype.hasOwnProperty.call(payload, "logoUrl")) {
     nextPayload.logoUrl = normalizeOptionalString(payload.logoUrl);
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'defaultDailyRate')) {
-    nextPayload.defaultDailyRate = normalizeDefaultDailyRate(payload.defaultDailyRate);
+  if (Object.prototype.hasOwnProperty.call(payload, "apiSymbol")) {
+    nextPayload.apiSymbol = normalizeOptionalString(payload.apiSymbol);
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'minimumInvestment')) {
-    nextPayload.minimumInvestment = normalizeMinimumInvestment(payload.minimumInvestment);
+  if (Object.prototype.hasOwnProperty.call(payload, "defaultDailyRate")) {
+    nextPayload.defaultDailyRate = normalizeDefaultDailyRate(
+      payload.defaultDailyRate,
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'lockPeriodDays')) {
-    nextPayload.lockPeriodDays = normalizeLockPeriodDays(payload.lockPeriodDays);
+  if (Object.prototype.hasOwnProperty.call(payload, "minimumInvestment")) {
+    nextPayload.minimumInvestment = normalizeMinimumInvestment(
+      payload.minimumInvestment,
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'isFeatured')) {
-    nextPayload.isFeatured = payload.isFeatured === true || payload.isFeatured === 'true';
+  if (Object.prototype.hasOwnProperty.call(payload, "lockPeriodDays")) {
+    nextPayload.lockPeriodDays = normalizeLockPeriodDays(
+      payload.lockPeriodDays,
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'isActive')) {
-    nextPayload.isActive = payload.isActive === true || payload.isActive === 'true';
+  if (Object.prototype.hasOwnProperty.call(payload, "isFeatured")) {
+    nextPayload.isFeatured =
+      payload.isFeatured === true || payload.isFeatured === "true";
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'marketCap')) {
-    nextPayload.marketCap = normalizeNonNegativeNumber(payload.marketCap, 'Market cap');
+  if (Object.prototype.hasOwnProperty.call(payload, "isActive")) {
+    nextPayload.isActive =
+      payload.isActive === true || payload.isActive === "true";
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'volume')) {
-    nextPayload.volume = normalizeNonNegativeNumber(payload.volume, 'Volume');
+  if (Object.prototype.hasOwnProperty.call(payload, "marketCap")) {
+    nextPayload.marketCap = normalizeNonNegativeNumber(
+      payload.marketCap,
+      "Market cap",
+    );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
+  if (Object.prototype.hasOwnProperty.call(payload, "volume")) {
+    nextPayload.volume = normalizeNonNegativeNumber(payload.volume, "Volume");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "description")) {
     nextPayload.description = normalizeOptionalString(payload.description);
   }
 
@@ -439,7 +515,7 @@ export const updateIndexService = async ({ indexId, payload }) => {
   await index.save();
 
   const populated = await Index.findById(index._id)
-    .populate('category', 'name slug color icon displayOrder isActive')
+    .populate("category", "name slug color icon displayOrder isActive")
     .lean({ virtuals: true });
 
   return mapIndexResponse(populated);
@@ -447,13 +523,13 @@ export const updateIndexService = async ({ indexId, payload }) => {
 
 export const deleteIndexService = async ({ indexId }) => {
   if (!mongoose.Types.ObjectId.isValid(indexId)) {
-    throw new ApiError(400, 'Invalid index id');
+    throw new ApiError(400, "Invalid index id");
   }
 
   const index = await Index.findByIdAndDelete(indexId);
 
   if (!index) {
-    throw new ApiError(404, 'Index not found');
+    throw new ApiError(404, "Index not found");
   }
 
   return null;

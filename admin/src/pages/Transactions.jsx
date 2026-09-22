@@ -1,40 +1,41 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import {
-  fetchTransactions,
-  setFilters,
-  setPage,
-  setLimit,
-} from '../store/slices/transactionsSlice';
-import {
-  Search,
-  RefreshCw,
+  AlertCircle,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Calendar,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Wallet,
   Clock3,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   ListFilter,
   Phone,
+  RefreshCw,
+  Search,
+  Wallet,
   X,
-  Calendar,
-} from 'lucide-react';
-import Loading from '../components/Loader';
+  XCircle,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Loading from "../components/Loader";
+import {
+  fetchTransactions,
+  setFilters,
+  setLimit,
+  setPage,
+} from "../store/slices/transactionsSlice";
 
-const formatCurrency = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+const formatCurrency = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
 const STATUS_STYLES = {
-  completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  pending: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-  rejected: 'bg-red-50 text-red-700 ring-1 ring-red-200',
-  failed: 'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
-  cancelled: 'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
+  completed: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+  rejected: "bg-red-50 text-red-700 ring-1 ring-red-200",
+  failed: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
+  cancelled: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
 };
 
 const STATUS_ICONS = {
@@ -47,16 +48,16 @@ const STATUS_ICONS = {
 
 // Values must exactly match your Transaction schema's category enum.
 const CATEGORY_LABELS = {
-  add_money: 'Add Money',
-  withdrawal: 'Withdrawal',
-  refund: 'Refund',
-  investment_principal_debit: 'Investment Principal Debit',
-  investment_interest: 'Investment Interest',
-  investment_principal_return: 'Investment Principal Return',
-  investment_refund: 'Investment Refund',
-  investment_unlock: 'Investment Unlock',
-  investment_renew: 'Investment Renew',
-  referral_bonus: 'Referral Bonus',
+  add_money: "Add Money",
+  withdrawal: "Withdrawal",
+  refund: "Refund",
+  investment_principal_debit: "Investment Principal Debit",
+  investment_interest: "Investment Interest",
+  investment_principal_return: "Investment Principal Return",
+  investment_refund: "Investment Refund",
+  investment_unlock: "Investment Unlock",
+  investment_renew: "Investment Renew",
+  referral_bonus: "Referral Bonus",
 };
 
 const SkeletonRows = ({ rows = 8 }) => (
@@ -72,11 +73,21 @@ const SkeletonRows = ({ rows = 8 }) => (
             </div>
           </div>
         </td>
-        <td className="px-6 py-4"><div className="h-3 w-28 rounded bg-gray-200" /></td>
-        <td className="px-6 py-4"><div className="h-3 w-20 rounded bg-gray-200" /></td>
-        <td className="px-6 py-4"><div className="h-3 w-24 rounded bg-gray-100" /></td>
-        <td className="px-6 py-4"><div className="h-5 w-20 rounded-full bg-gray-200" /></td>
-        <td className="px-6 py-4"><div className="h-3 w-32 rounded bg-gray-200" /></td>
+        <td className="px-6 py-4">
+          <div className="h-3 w-28 rounded bg-gray-200" />
+        </td>
+        <td className="px-6 py-4">
+          <div className="h-3 w-20 rounded bg-gray-200" />
+        </td>
+        <td className="px-6 py-4">
+          <div className="h-3 w-24 rounded bg-gray-100" />
+        </td>
+        <td className="px-6 py-4">
+          <div className="h-5 w-20 rounded-full bg-gray-200" />
+        </td>
+        <td className="px-6 py-4">
+          <div className="h-3 w-32 rounded bg-gray-200" />
+        </td>
       </tr>
     ))}
   </>
@@ -96,20 +107,20 @@ const Transactions = () => {
     error,
   } = useSelector((state) => state.transactions);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [jumpToPage, setJumpToPage] = useState('');
+  const [jumpToPage, setJumpToPage] = useState("");
 
   const requestTransactions = () => {
     dispatch(
       fetchTransactions({
         page: currentPage,
         limit,
-        status: filters.status || '',
-        category: filters.category || '',
-        startDate: filters.startDate || '',
-        endDate: filters.endDate || '',
-      })
+        status: filters.status || "",
+        category: filters.category || "",
+        startDate: filters.startDate || "",
+        endDate: filters.endDate || "",
+      }),
     );
   };
 
@@ -134,13 +145,13 @@ const Transactions = () => {
   const clearAllFilters = () => {
     dispatch(
       setFilters({
-        status: '',
-        category: '',
-        startDate: '',
-        endDate: '',
-      })
+        status: "",
+        category: "",
+        startDate: "",
+        endDate: "",
+      }),
     );
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const goToPage = (page) => {
@@ -166,7 +177,7 @@ const Transactions = () => {
   const submitJumpToPage = () => {
     const page = Number.parseInt(jumpToPage, 10);
     goToPage(page);
-    setJumpToPage('');
+    setJumpToPage("");
   };
 
   // This is intentionally only a current-page search. For global database search
@@ -177,14 +188,15 @@ const Transactions = () => {
     const term = searchTerm.trim().toLowerCase();
 
     return transactions.filter((txn) => {
-      const name = txn.userId?.fullName?.toLowerCase() || '';
-      const phone = txn.userId?.phoneNumber?.toLowerCase() || '';
-      const paymentUtr = txn.paymentDetails?.utrNumber?.toLowerCase() || '';
-      const withdrawalUtr = txn.withdrawalDetails?.utrNumber?.toLowerCase() || '';
-      const category = txn.category?.toLowerCase() || '';
-      const categoryLabel = CATEGORY_LABELS[txn.category]?.toLowerCase() || '';
-      const status = txn.status?.toLowerCase() || '';
-      const amount = String(txn.amount || '');
+      const name = txn.userId?.fullName?.toLowerCase() || "";
+      const phone = txn.userId?.phoneNumber?.toLowerCase() || "";
+      const paymentUtr = txn.paymentDetails?.utrNumber?.toLowerCase() || "";
+      const withdrawalUtr =
+        txn.withdrawalDetails?.utrNumber?.toLowerCase() || "";
+      const category = txn.category?.toLowerCase() || "";
+      const categoryLabel = CATEGORY_LABELS[txn.category]?.toLowerCase() || "";
+      const status = txn.status?.toLowerCase() || "";
+      const amount = String(txn.amount || "");
 
       return (
         name.includes(term) ||
@@ -200,20 +212,56 @@ const Transactions = () => {
   }, [transactions, searchTerm]);
 
   const summary = useMemo(() => {
-    const credit = transactions
-      .filter((transaction) => transaction.type === 'credit')
-      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+    const completedTransactions = filteredTransactions.filter(
+      (transaction) =>
+        String(transaction.status || "")
+          .trim()
+          .toLowerCase() === "completed",
+    );
 
-    const debit = transactions
-      .filter((transaction) => transaction.type === 'debit')
-      .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+    const credit = completedTransactions
+      .filter(
+        (transaction) =>
+          String(transaction.type || "")
+            .trim()
+            .toLowerCase() === "credit" &&
+          String(transaction.category || "")
+            .trim()
+            .toLowerCase() === "add_money",
+      )
+      .reduce(
+        (sum, transaction) => sum + Math.abs(Number(transaction.amount || 0)),
+        0,
+      );
 
-    const pending = transactions.filter(
-      (transaction) => transaction.status === 'pending'
+    const debit = completedTransactions
+      .filter(
+        (transaction) =>
+          String(transaction.type || "")
+            .trim()
+            .toLowerCase() === "debit" &&
+          String(transaction.category || "")
+            .trim()
+            .toLowerCase() === "withdrawal",
+      )
+      .reduce(
+        (sum, transaction) => sum + Math.abs(Number(transaction.amount || 0)),
+        0,
+      );
+
+    const pending = filteredTransactions.filter(
+      (transaction) =>
+        String(transaction.status || "")
+          .trim()
+          .toLowerCase() === "pending",
     ).length;
 
-    return { credit, debit, pending };
-  }, [transactions]);
+    return {
+      credit,
+      debit,
+      pending,
+    };
+  }, [filteredTransactions]);
 
   const pageNumbers = useMemo(() => {
     if (totalPages <= 0) return [];
@@ -240,7 +288,8 @@ const Transactions = () => {
     (filters.startDate ? 1 : 0) +
     (filters.endDate ? 1 : 0);
 
-  const displayStart = totalTransactions === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const displayStart =
+    totalTransactions === 0 ? 0 : (currentPage - 1) * limit + 1;
   const displayEnd = Math.min(currentPage * limit, totalTransactions);
 
   if (loading && transactions.length === 0) {
@@ -251,9 +300,13 @@ const Transactions = () => {
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">All Transactions</h1>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            All Transactions
+          </h1>
           <p className="mt-1 text-sm text-gray-600 sm:text-base">
-            {totalTransactions.toLocaleString('en-IN')} total records
+            {searchTerm.trim()
+              ? `${filteredTransactions.length.toLocaleString("en-IN")} matching records`
+              : `${totalTransactions.toLocaleString("en-IN")} total records`}
           </p>
         </div>
 
@@ -263,7 +316,7 @@ const Transactions = () => {
           className="flex w-fit items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
         >
-          <RefreshCw size={18} className={isFetching ? 'animate-spin' : ''} />
+          <RefreshCw size={18} className={isFetching ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
@@ -273,24 +326,36 @@ const Transactions = () => {
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-100">
             <ArrowUpCircle className="text-emerald-600" size={22} />
           </div>
-          <p className="text-sm text-gray-600">Credits (this page)</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600">{formatCurrency(summary.credit)}</p>
+          <p className="text-sm text-gray-600">
+            Deposits {searchTerm.trim() ? "(search results)" : "(this page)"}
+          </p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">
+            {formatCurrency(summary.credit)}
+          </p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-red-100">
             <ArrowDownCircle className="text-red-600" size={22} />
           </div>
-          <p className="text-sm text-gray-600">Debits (this page)</p>
-          <p className="mt-1 text-2xl font-bold text-red-600">{formatCurrency(summary.debit)}</p>
+          <p className="text-sm text-gray-600">
+            Withdrawals {searchTerm.trim() ? "(search results)" : "(this page)"}
+          </p>
+          <p className="mt-1 text-2xl font-bold text-red-600">
+            {formatCurrency(summary.debit)}
+          </p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-amber-100">
             <Clock3 className="text-amber-600" size={22} />
           </div>
-          <p className="text-sm text-gray-600">Pending (this page)</p>
-          <p className="mt-1 text-2xl font-bold text-amber-600">{summary.pending}</p>
+          <p className="text-sm text-gray-600">
+            Pending {searchTerm.trim() ? "(search results)" : "(this page)"}
+          </p>
+          <p className="mt-1 text-2xl font-bold text-amber-600">
+            {summary.pending}
+          </p>
         </div>
       </div>
 
@@ -314,8 +379,8 @@ const Transactions = () => {
             onClick={() => setShowFilters((previous) => !previous)}
             className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold transition ${
               activeFilterCount > 0
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             type="button"
           >
@@ -332,10 +397,14 @@ const Transactions = () => {
         {showFilters && (
           <div className="mt-5 grid grid-cols-1 gap-4 border-t border-gray-200 pt-5 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Status</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Status
+              </label>
               <select
-                value={filters.status || ''}
-                onChange={(event) => handleFilterChange('status', event.target.value)}
+                value={filters.status || ""}
+                onChange={(event) =>
+                  handleFilterChange("status", event.target.value)
+                }
                 disabled={isFetching}
                 className="w-full rounded-xl border border-gray-200 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
               >
@@ -349,29 +418,42 @@ const Transactions = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Category</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Category
+              </label>
               <select
-                value={filters.category || ''}
-                onChange={(event) => handleFilterChange('category', event.target.value)}
+                value={filters.category || ""}
+                onChange={(event) =>
+                  handleFilterChange("category", event.target.value)
+                }
                 disabled={isFetching}
                 className="w-full rounded-xl border border-gray-200 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
               >
                 <option value="">All Categories</option>
                 {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">From Date</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                From Date
+              </label>
               <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Calendar
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
                 <input
                   type="date"
-                  value={filters.startDate || ''}
+                  value={filters.startDate || ""}
                   max={filters.endDate || undefined}
-                  onChange={(event) => handleFilterChange('startDate', event.target.value)}
+                  onChange={(event) =>
+                    handleFilterChange("startDate", event.target.value)
+                  }
                   disabled={isFetching}
                   className="w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
                 />
@@ -379,14 +461,21 @@ const Transactions = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">To Date</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                To Date
+              </label>
               <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Calendar
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
                 <input
                   type="date"
-                  value={filters.endDate || ''}
+                  value={filters.endDate || ""}
                   min={filters.startDate || undefined}
-                  onChange={(event) => handleFilterChange('endDate', event.target.value)}
+                  onChange={(event) =>
+                    handleFilterChange("endDate", event.target.value)
+                  }
                   disabled={isFetching}
                   className="w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
                 />
@@ -394,7 +483,9 @@ const Transactions = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Rows per page</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Rows per page
+              </label>
               <select
                 value={limit}
                 onChange={handleLimitChange}
@@ -435,11 +526,13 @@ const Transactions = () => {
       {!isFetching && filteredTransactions.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
           <Wallet className="mx-auto mb-4 text-gray-400" size={56} />
-          <h3 className="mb-2 text-xl font-bold text-gray-800">No Transactions Found</h3>
+          <h3 className="mb-2 text-xl font-bold text-gray-800">
+            No Transactions Found
+          </h3>
           <p className="text-gray-500">
             {searchTerm || activeFilterCount > 0
-              ? 'Try adjusting your search or filters'
-              : 'No transactions have been recorded yet'}
+              ? "Try adjusting your search or filters"
+              : "No transactions have been recorded yet"}
           </p>
         </div>
       ) : (
@@ -448,12 +541,24 @@ const Transactions = () => {
             <table className="w-full min-w-[900px]">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">User</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Category</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">UTR Number</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    User
+                  </th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Category
+                  </th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    UTR Number
+                  </th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Date
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -462,35 +567,46 @@ const Transactions = () => {
                 ) : (
                   filteredTransactions.map((txn) => {
                     const StatusIcon = STATUS_ICONS[txn.status] || AlertCircle;
-                    const utrNumber = txn.paymentDetails?.utrNumber || txn.withdrawalDetails?.utrNumber;
+                    const utrNumber =
+                      txn.paymentDetails?.utrNumber ||
+                      txn.withdrawalDetails?.utrNumber;
 
                     return (
                       <tr key={txn._id} className="transition hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-                              {txn.userId?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                              {txn.userId?.fullName?.charAt(0)?.toUpperCase() ||
+                                "U"}
                             </div>
                             <div className="min-w-0">
                               <p className="max-w-[200px] truncate font-medium text-gray-900">
-                                {txn.userId?.fullName || 'Unknown User'}
+                                {txn.userId?.fullName || "Unknown User"}
                               </p>
                               <p className="flex items-center gap-1 text-xs text-gray-500">
                                 <Phone size={11} />
-                                {txn.userId?.phoneNumber || '-'}
+                                {txn.userId?.phoneNumber || "-"}
                               </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm font-medium text-gray-700">
-                            {CATEGORY_LABELS[txn.category] || txn.category?.replace(/_/g, ' ') || '-'}
+                            {CATEGORY_LABELS[txn.category] ||
+                              txn.category?.replace(/_/g, " ") ||
+                              "-"}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 font-bold ${txn.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {txn.type === 'credit' ? <ArrowUpCircle size={14} /> : <ArrowDownCircle size={14} />}
-                            {txn.type === 'credit' ? '+' : '-'}
+                          <span
+                            className={`inline-flex items-center gap-1 font-bold ${txn.type === "credit" ? "text-emerald-600" : "text-red-600"}`}
+                          >
+                            {txn.type === "credit" ? (
+                              <ArrowUpCircle size={14} />
+                            ) : (
+                              <ArrowDownCircle size={14} />
+                            )}
+                            {txn.type === "credit" ? "+" : "-"}
                             {formatCurrency(Math.abs(Number(txn.amount || 0)))}
                           </span>
                         </td>
@@ -507,18 +623,20 @@ const Transactions = () => {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium capitalize ${STATUS_STYLES[txn.status] || STATUS_STYLES.failed}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium capitalize ${STATUS_STYLES[txn.status] || STATUS_STYLES.failed}`}
+                          >
                             <StatusIcon size={12} />
-                            {txn.status || 'unknown'}
+                            {txn.status || "unknown"}
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
                           {txn.createdAt
-                            ? new Date(txn.createdAt).toLocaleString('en-IN', {
-                                dateStyle: 'medium',
-                                timeStyle: 'short',
+                            ? new Date(txn.createdAt).toLocaleString("en-IN", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
                               })
-                            : '-'}
+                            : "-"}
                         </td>
                       </tr>
                     );
@@ -531,9 +649,19 @@ const Transactions = () => {
           <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white px-4 py-5 sm:px-6 lg:flex-row">
             <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
               <p className="text-sm text-gray-600">
-                Showing <span className="font-semibold text-gray-900">{displayStart}</span> to{' '}
-                <span className="font-semibold text-gray-900">{displayEnd}</span> of{' '}
-                <span className="font-semibold text-gray-900">{totalTransactions.toLocaleString('en-IN')}</span> transactions
+                Showing{" "}
+                <span className="font-semibold text-gray-900">
+                  {displayStart}
+                </span>{" "}
+                to{" "}
+                <span className="font-semibold text-gray-900">
+                  {displayEnd}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-gray-900">
+                  {totalTransactions.toLocaleString("en-IN")}
+                </span>{" "}
+                transactions
               </p>
 
               {totalPages > 1 && (
@@ -546,7 +674,7 @@ const Transactions = () => {
                     value={jumpToPage}
                     onChange={(event) => setJumpToPage(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter') submitJumpToPage();
+                      if (event.key === "Enter") submitJumpToPage();
                     }}
                     onBlur={submitJumpToPage}
                     placeholder={String(currentPage)}
@@ -567,7 +695,10 @@ const Transactions = () => {
                   aria-label="First page"
                   title="First page"
                 >
-                  <ChevronsLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
+                  <ChevronsLeft
+                    size={18}
+                    className="transition-transform group-hover:-translate-x-0.5"
+                  />
                 </button>
 
                 <button
@@ -578,7 +709,10 @@ const Transactions = () => {
                   aria-label="Previous page"
                   title="Previous page"
                 >
-                  <ChevronLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
+                  <ChevronLeft
+                    size={18}
+                    className="transition-transform group-hover:-translate-x-0.5"
+                  />
                 </button>
 
                 {pageNumbers[0] > 1 && (
@@ -591,7 +725,9 @@ const Transactions = () => {
                     >
                       1
                     </button>
-                    {pageNumbers[0] > 2 && <span className="px-1 text-gray-400">…</span>}
+                    {pageNumbers[0] > 2 && (
+                      <span className="px-1 text-gray-400">…</span>
+                    )}
                   </>
                 )}
 
@@ -602,11 +738,11 @@ const Transactions = () => {
                     disabled={isFetching}
                     className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-semibold transition-all disabled:cursor-not-allowed ${
                       page === currentPage
-                        ? 'scale-105 bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200'
-                        : 'border border-gray-200 bg-white text-gray-700 hover:scale-105 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40'
+                        ? "scale-105 bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200"
+                        : "border border-gray-200 bg-white text-gray-700 hover:scale-105 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40"
                     }`}
                     type="button"
-                    aria-current={page === currentPage ? 'page' : undefined}
+                    aria-current={page === currentPage ? "page" : undefined}
                   >
                     {page}
                   </button>
@@ -636,7 +772,10 @@ const Transactions = () => {
                   aria-label="Next page"
                   title="Next page"
                 >
-                  <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
+                  <ChevronRight
+                    size={18}
+                    className="transition-transform group-hover:translate-x-0.5"
+                  />
                 </button>
 
                 <button
@@ -647,7 +786,10 @@ const Transactions = () => {
                   aria-label="Last page"
                   title="Last page"
                 >
-                  <ChevronsRight size={18} className="transition-transform group-hover:translate-x-0.5" />
+                  <ChevronsRight
+                    size={18}
+                    className="transition-transform group-hover:translate-x-0.5"
+                  />
                 </button>
               </div>
             )}

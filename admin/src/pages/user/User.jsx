@@ -22,9 +22,7 @@ import {
   Search,
   Send,
   ShieldAlert,
-  ShoppingBag,
   Star,
-  Target,
   Trash2,
   TrendingDown,
   TrendingUp,
@@ -85,10 +83,13 @@ const Users = () => {
   } = useSelector((state) => state.users);
 
   const totalInterestEarned = Number(stats?.totalInterestEarned || 0);
-  const totalInvestedAmountAllUsers = Number(
-    stats?.totalInvested ?? stats?.totalInvestedAmount ?? 0,
+  const activeInvestmentAmountAllUsers = Number(
+    stats?.activeInvestmentAmount || 0,
   );
-  const totalOrdersCountAllUsers = Number(stats?.totalOrders || 0);
+
+  const activeInvestmentCountAllUsers = Number(
+    stats?.activeInvestmentCount || 0,
+  );
 
   const [searchTerm, setSearchTerm] = useState(filters.search || "");
   const [showFilters, setShowFilters] = useState(false);
@@ -257,7 +258,8 @@ const Users = () => {
       "Name",
       "Phone",
       "Wallet Balance",
-      "Invested",
+      "Current Active Investment",
+      "Active Investment Count",
       "Joined",
       "Verified",
       "Genuine",
@@ -267,7 +269,8 @@ const Users = () => {
       user.fullName || "",
       `${user.countryCode || ""} ${user.phoneNumber || ""}`.trim(),
       user.walletBalance || 0,
-      user.totalInvested || 0,
+      user.activeInvestmentAmount || 0,
+      user.activeInvestmentCount || 0,
       user.createdAt || "",
       user.isVerified ? "Yes" : "No",
       user.isGenuine ? "Yes" : "No",
@@ -501,7 +504,7 @@ const Users = () => {
           </p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        {/* <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
               <TrendingUp className="text-purple-600" size={24} />
@@ -515,7 +518,7 @@ const Users = () => {
           <p className="mt-2 text-xs text-gray-500">
             {formatCurrency(totalInterestEarned)} all-time, all users
           </p>
-        </div>
+        </div> */}
 
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
@@ -533,7 +536,7 @@ const Users = () => {
           </p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        {/* <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
               <Target className="text-indigo-600" size={24} />
@@ -550,23 +553,29 @@ const Users = () => {
             {formatCurrency(totalInvestedAmountAllUsers)} principal invested
             across all users
           </p>
-        </div>
+        </div> */}
 
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
-              <ShoppingBag className="text-teal-600" size={24} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100">
+              <TrendingUp className="text-emerald-600" size={24} />
             </div>
-            <Activity className="text-teal-500" size={20} />
+
+            <Activity className="text-emerald-500" size={20} />
           </div>
+
           <p className="mb-1 text-sm text-gray-600">
-            Total Orders / Investments
+            Current Active Investment
           </p>
-          <p className="text-3xl font-bold text-teal-600">
-            {totalOrdersCountAllUsers}
+
+          <p className="text-3xl font-bold text-emerald-600">
+            {formatCompactLakh(activeInvestmentAmountAllUsers)}
           </p>
+
           <p className="mt-2 text-xs text-gray-500">
-            All orders/investments created by all users
+            {formatCurrency(activeInvestmentAmountAllUsers)} across{" "}
+            {activeInvestmentCountAllUsers.toLocaleString("en-IN")} active
+            investments
           </p>
         </div>
       </div>
@@ -731,8 +740,17 @@ const Users = () => {
                       {formatCurrency(user.walletBalance)}
                     </td>
 
-                    <td className="px-5 py-4 font-semibold text-indigo-600">
-                      {formatCurrency(user.totalInvested)}
+                    <td className="px-5 py-4">
+                      <p className="font-semibold text-emerald-600">
+                        {formatCurrency(user.activeInvestmentAmount)}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        {Number(user.activeInvestmentCount || 0).toLocaleString(
+                          "en-IN",
+                        )}{" "}
+                        active investments
+                      </p>
                     </td>
 
                     <td className="px-5 py-4 text-sm text-gray-600">

@@ -346,33 +346,22 @@ export const getAllTransactionsService = async ({
 } = {}) => {
   const filter = {};
 
-  /*
-    Individual user page:
-    filter first by userId.
-
-    Example:
-    /admin/transactions?userId=USER_ID&page=1&limit=40
-
-    MongoDB will return only that user's transactions,
-    40 records for the selected page.
-  */
   if (userId) {
-    filter.userId = userId;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new ApiError(400, "Invalid user ID");
+    }
+
+    filter.userId = new mongoose.Types.ObjectId(userId);
   }
 
   if (status) {
-    filter.status = status;
+    filter.status = String(status).trim().toLowerCase();
   }
 
   if (category) {
-    filter.category = category;
+    filter.category = String(category).trim().toLowerCase();
   }
 
-  /*
-    Date filter is inclusive:
-    startDate = 2026-08-01 => includes all transactions from 1 Aug
-    endDate = 2026-08-26 => includes up to 26 Aug, 11:59:59 PM
-  */
   if (startDate || endDate) {
     filter.createdAt = {};
 
@@ -397,17 +386,14 @@ export const getAllTransactionsService = async ({
     }
   }
 
-  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
 
-  /*
-    Default is 40 transactions per page.
+  const requestedLimit = Math.max(Number.parseInt(limit, 10) || 40, 1);
 
-    The max 100 is a safety guard. Even if somebody manually calls:
-    ?limit=200000
-
-    your server will still return maximum 100 rows in one request.
-  */
-  const limitNum = Math.min(Math.max(parseInt(limit, 10) || 40, 1), 100);
+  // User Details is allowed to load the full history.
+  // General transaction list remains safely capped.
+  const maxLimit = userId ? 10000 : 200;
+  const limitNum = Math.min(requestedLimit, maxLimit);
 
   const skip = (pageNum - 1) * limitNum;
 
@@ -422,12 +408,46 @@ export const getAllTransactionsService = async ({
     Transaction.countDocuments(filter),
   ]);
 
+  const completedAddMoneyTransactions = transactions.filter((transaction) => {
+    return (
+      String(transaction.status || "")
+        .trim()
+        .toLowerCase() === "completed" &&
+      String(transaction.category || "")
+        .trim()
+        .toLowerCase() === "add_money" &&
+      String(transaction.type || "")
+        .trim()
+        .toLowerCase() === "credit"
+    );
+  });
+
+  const completedAddMoneyTotal = completedAddMoneyTransactions.reduce(
+    (sum, transaction) => sum + Number(transaction.amount || 0),
+    0,
+  );
+
+  console.log("ADMIN USER TRANSACTION QUERY:", {
+    userId,
+    filter,
+    totalTransactions,
+    returnedTransactions: transactions.length,
+    completedAddMoneyCount: completedAddMoneyTransactions.length,
+    completedAddMoneyTotal,
+  });
+
   return {
     transactions,
     totalTransactions,
     currentPage: pageNum,
     totalPages: Math.ceil(totalTransactions / limitNum),
     limit: limitNum,
+
+    // Extra backend-confirmed summary for selected user.
+    transactionSummary: {
+      completedAddMoneyCount: completedAddMoneyTransactions.length,
+      completedAddMoneyTotal,
+    },
   };
 };
 
@@ -447,60 +467,84 @@ export const getAllUsersService = async ({
     ];
   }
 
-  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-  const pageNum = Number(page);
-  const limitNum = Number(limit);
+  const safePage = Math.max(Number.parseInt(page, 10) || 1, 1);
+  const safeLimit = Math.max(Number.parseInt(limit, 10) || 20, 1);
 
-  const users = await User.find(filter)
-    .select(
-      "fullName phoneNumber walletBalance kycStatus isVerified isGenuine createdAt lastLogin",
-    )
-    .sort(sort)
-    .limit(limitNum)
-    .skip((pageNum - 1) * limitNum)
-    .lean();
+  const allowedSortFields = ["createdAt", "fullName", "walletBalance"];
+  const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
 
-  const count = await User.countDocuments(filter);
-  const totalWalletBalance = users.reduce(
-    (sum, user) => sum + (user.walletBalance || 0),
-    0,
-  );
+  const sort = {
+    [safeSortBy]: sortOrder === "asc" ? 1 : -1,
+  };
 
-  const userIds = users.map((u) => u._id);
+  const [users, count] = await Promise.all([
+    User.find(filter)
+      .select(
+        "fullName phoneNumber walletBalance kycStatus isVerified isGenuine createdAt lastLogin",
+      )
+      .sort(sort)
+      .limit(safeLimit)
+      .skip((safePage - 1) * safeLimit)
+      .lean(),
 
-  const investmentAgg = await Investment.aggregate([
-    { $match: { userId: { $in: userIds } } },
+    User.countDocuments(filter),
+  ]);
+
+  const userIds = users.map((user) => user._id);
+
+  /*
+    IMPORTANT:
+    Only status: active records are counted.
+    Unlocked, completed, cancelled, failed, pending and closed investments
+    are deliberately excluded.
+  */
+  const activeInvestmentAgg = await Investment.aggregate([
+    {
+      $match: {
+        userId: { $in: userIds },
+        status: "active",
+      },
+    },
     {
       $group: {
         _id: "$userId",
-        totalInvested: { $sum: "$amount" },
-        totalInterestEarned: { $sum: "$totalInterestEarned" },
-        ordersCount: { $sum: 1 },
+        activeInvestmentAmount: {
+          $sum: { $ifNull: ["$amount", 0] },
+        },
+        activeInvestmentCount: { $sum: 1 },
       },
     },
   ]);
 
-  const investmentMap = {};
-  investmentAgg.forEach((row) => {
-    investmentMap[String(row._id)] = {
-      totalInvested: row.totalInvested || 0,
-      totalInterestEarned: row.totalInterestEarned || 0,
-      ordersCount: row.ordersCount || 0,
+  const activeInvestmentMap = {};
+
+  activeInvestmentAgg.forEach((row) => {
+    activeInvestmentMap[String(row._id)] = {
+      activeInvestmentAmount: Number(row.activeInvestmentAmount || 0),
+      activeInvestmentCount: Number(row.activeInvestmentCount || 0),
     };
   });
 
   const enrichedUsers = users.map((user) => ({
     ...user,
-    totalInvested: investmentMap[String(user._id)]?.totalInvested || 0,
-    totalInterestEarned:
-      investmentMap[String(user._id)]?.totalInterestEarned || 0,
-    ordersCount: investmentMap[String(user._id)]?.ordersCount || 0,
+
+    // Use these fields in Users.jsx.
+    activeInvestmentAmount:
+      activeInvestmentMap[String(user._id)]?.activeInvestmentAmount || 0,
+
+    activeInvestmentCount:
+      activeInvestmentMap[String(user._id)]?.activeInvestmentCount || 0,
   }));
+
+  const totalWalletBalance = users.reduce(
+    (sum, user) => sum + Number(user.walletBalance || 0),
+    0,
+  );
 
   return {
     users: enrichedUsers,
-    totalPages: Math.ceil(count / limitNum),
-    currentPage: pageNum,
+    totalPages: Math.ceil(count / safeLimit),
+    currentPage: safePage,
     totalUsers: count,
     totalWalletBalance,
   };
@@ -678,55 +722,90 @@ export const updateUserBalanceService = async ({
 };
 
 export const getUserStatsService = async () => {
-  const totalUsers = await User.countDocuments({ isActive: true });
-  const verifiedUsers = await User.countDocuments({
-    isActive: true,
-    isVerified: true,
-  });
-  const kycPendingUsers = await User.countDocuments({ kycStatus: "pending" });
+  const [
+    totalUsers,
+    verifiedUsers,
+    kycPendingUsers,
+    walletStats,
+    activeInvestmentStats,
+  ] = await Promise.all([
+    User.countDocuments({ isActive: true }),
 
-  const walletStats = await User.aggregate([
-    { $match: { isActive: true } },
-    {
-      $group: {
-        _id: null,
-        totalWalletBalance: { $sum: "$walletBalance" },
-        avgWalletBalance: { $avg: "$walletBalance" },
+    User.countDocuments({
+      isActive: true,
+      isVerified: true,
+    }),
+
+    User.countDocuments({
+      isActive: true,
+      kycStatus: "pending",
+    }),
+
+    User.aggregate([
+      { $match: { isActive: true } },
+      {
+        $group: {
+          _id: null,
+          totalWalletBalance: {
+            $sum: { $ifNull: ["$walletBalance", 0] },
+          },
+          avgWalletBalance: {
+            $avg: { $ifNull: ["$walletBalance", 0] },
+          },
+        },
       },
-    },
+    ]),
+
+    /*
+        Only currently ACTIVE investments:
+        - active principal amount
+        - active investment count
+        Excludes completed, unlocked, cancelled, failed, pending and closed.
+      */
+    Investment.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          activeInvestmentAmount: {
+            $sum: { $ifNull: ["$amount", 0] },
+          },
+          activeInvestmentCount: { $sum: 1 },
+        },
+      },
+    ]),
   ]);
 
-  const stats = walletStats[0] || {
+  const walletSummary = walletStats[0] || {
     totalWalletBalance: 0,
     avgWalletBalance: 0,
   };
 
-  const investmentStats = await Investment.aggregate([
-    {
-      $group: {
-        _id: null,
-        totalInvested: { $sum: "$amount" },
-        totalInterestEarned: { $sum: "$totalInterestEarned" },
-        totalOrders: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const invStats = investmentStats[0] || {
-    totalInvested: 0,
-    totalInterestEarned: 0,
-    totalOrders: 0,
+  const activeInvestmentSummary = activeInvestmentStats[0] || {
+    activeInvestmentAmount: 0,
+    activeInvestmentCount: 0,
   };
 
   return {
     totalUsers,
     verifiedUsers,
     kycPendingUsers,
-    totalWalletBalance: stats.totalWalletBalance,
-    avgWalletBalance: stats.avgWalletBalance,
-    totalInvested: invStats.totalInvested,
-    totalInterestEarned: invStats.totalInterestEarned,
-    totalOrders: invStats.totalOrders,
+
+    totalWalletBalance: Number(walletSummary.totalWalletBalance || 0),
+    avgWalletBalance: Number(walletSummary.avgWalletBalance || 0),
+
+    // New fields for Users Management page.
+    activeInvestmentAmount: Number(
+      activeInvestmentSummary.activeInvestmentAmount || 0,
+    ),
+
+    activeInvestmentCount: Number(
+      activeInvestmentSummary.activeInvestmentCount || 0,
+    ),
   };
 };
 
